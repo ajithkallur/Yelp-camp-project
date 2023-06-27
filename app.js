@@ -3,8 +3,9 @@ var app = express();
 const path = require('path')
 const mongoose = require('mongoose');
 const cities = require('./Seeds/cities');
-const {places, descriptor} = require('./Seeds/seedhelpers')
-const methodOverride = require('method-override')
+const {places, descriptors} = require('./Seeds/seedhelpers')
+const morgan = require('morgan')
+const ejsMate = require('ejs-mate')
 var __dirname ="C:\Users\aajithkumarreddy\Desktop\Desktop\Personal\Full Stack\Yelp\Yelp camp project\views";
 main().catch(err => console.log(err));
 
@@ -30,24 +31,40 @@ const Campground = mongoose.model('Campgrounds', campGroundSchema);
 //app.set('views', path.join(__dirname, 'views'));
 // set the view engine to ejs
 app.set('view engine', 'ejs');
+
+//use ejs-mate engine for ejs
+app.engine('ejs',ejsMate)
+//used to send ID or any thing in URL
 app.use(express.urlencoded({extended: true}))
-app.use(methodOverride('_method'))
+//used to use put or delete methods in Forms
+//app.use(methodOverride('_method'))
+//used for logging
+app.use(morgan('common'))
 
+//next and return next
 
-const seedDB = async()=>{  
-await Campground.deleteMany({});
-  for(let i =0; i<50; i++){
-    const random1000 = Math.floor(Math.random() +1000);
-    const camp = new Campground({
-      location: '${cities[random1000].city}, ${cities[random1000].state}',
-      title:'${sample(descriptors)} ${sample(places)}'
-    })
-    await camp.save();
-    
+const seedDB = async () => {
+  await Campground.deleteMany({});
+  for (let i = 0; i < 50; i++) {
+      const random1000 = Math.floor(Math.random() * 1000);
+      const price = Math.floor(Math.random() * 20) + 10;
+      const img = new Image(100, 200); // width, height
+       img.src = "https://picsum.photos/200/301"
+      const camp = new Campground({
+          location: `${cities[random1000].city}, ${cities[random1000].state}`,
+          title: `${sample(descriptors)} ${sample(places)}`,
+          image: img,
+          description: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Quibusdam dolores vero perferendis laudantium, consequuntur voluptatibus nulla architecto, sit soluta esse iure sed labore ipsam a cum nihil atque molestiae deserunt!',
+          price
+      })
+      
+      await camp.save();
   }
+
+
   console.log('Campground refreshed');
   //res.send("Success");
- };
+ }
 
  seedDB();
 // index page
@@ -94,3 +111,9 @@ app.post('/campgrounds/:id/delete', async(req, res) => {
     const campground = await Campground.findByIdAndDelete(id)
     res.redirect('/campgrounds');
 }); 
+
+//send 404 for any other request
+app.use((req,res) => {
+  res.status(404).send("NOT FOUND")
+})
+
