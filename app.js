@@ -93,6 +93,8 @@ const validateCampground = (req,res,next) =>{
   }).required()
   })
   
+  
+
   const {error} = campgroundSchema.validate(req.body)
    if (error){
     const msg = error.details.map(el=>el.message).join(',')
@@ -102,6 +104,24 @@ const validateCampground = (req,res,next) =>{
     next()
   }
 }
+
+const validateReview = (req,res,next) =>{
+  //server side validation with joi
+  const reviewSchema = Joi.object({
+   review:Joi.object({
+      body: Joi.string().required(),
+      rating: Joi.number().required().min(1).max(5)
+   }).required()
+   })
+   const {error} = reviewSchema.validate(req.body)
+    if (error){
+     const msg = error.details.map(el=>el.message).join(',')
+     throw new ExpressError(msg,400)
+   }
+   else{
+     next()
+   }
+ }
  app.get('/', async (req, res) => {
   const campgrounds = await Campground.find({});
   res.render('campgrounds/index', {campgrounds});
@@ -130,7 +150,7 @@ app.post('/campgrounds',  validateCampground,catchAsync(async (req, res,next) =>
       campground.reviews.push(review);
       await review.save();
       await campground.save();
-      res.redirect('/campgrounds/${campground._id}');
+      res.send('success');
     }))
 
 app.get('/campgrounds/new', (req, res) => {
